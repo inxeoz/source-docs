@@ -115,7 +115,7 @@ use nvme0n1 or something that is system disk , dont use usb disk like sda
 
 refer this guide  for creating partition using ``cfdisk``
 
-> [/posts/tech/how-to-use-cfdisk](/posts/tech/how-to-use-cfdisk)
+> [/linux/how-to-use-cfdisk/](/linux/how-to-use-cfdisk/)
 
 
 
