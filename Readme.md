@@ -28,6 +28,10 @@ Place the Spaceboy repository in `themes/spaceboy`. Start with this `hugo.toml`:
 baseURL = "https://example.com/"
 title = "My Site"
 theme = "spaceboy"
+mainSections = ["posts"]
+
+# Exclude the demo content packaged in the theme repository.
+ignoreFiles = ["spaceboy/content/.*"]
 
 # JSON is required by the built-in search index.
 [outputs]
@@ -35,8 +39,6 @@ theme = "spaceboy"
   page = ["HTML"]
 
 [params]
-  mainSections = ["posts"]
-
   [params.author]
     name = "Your Name"
 
