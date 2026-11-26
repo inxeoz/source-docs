@@ -1,14 +1,142 @@
+# Spaceboy Theme: Content and Customization Guide
+
+Spaceboy is a Hugo blog theme with light/dark mode, responsive layouts, search, shortcodes, image zoom, and build-time Mermaid and KaTeX rendering. This guide describes the current theme and shows how to create content, change its appearance, and extend its templates.
+
+The theme requires **Hugo 0.132 or newer**. Examples assume the theme is installed at `themes/spaceboy` and that commands run from the site root unless stated otherwise.
+
+## Quick start
+
+Use this site structure:
+
+```text
+my-site/
+├── hugo.toml
+├── content/
+│   └── posts/
+│       └── hello-world.md
+├── assets/
+│   └── css/
+│       └── override.css
+├── static/
+└── themes/
+    └── spaceboy/
+```
+
+Place the Spaceboy repository in `themes/spaceboy`. Start with this `hugo.toml`:
+
+```toml
+baseURL = "https://example.com/"
+title = "My Site"
+theme = "spaceboy"
+
+# JSON is required by the built-in search index.
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+  page = ["HTML"]
+
+[params]
+  mainSections = ["posts"]
+
+  [params.author]
+    name = "Your Name"
+
+  [[params.nav]]
+    name = "Home"
+    link = "/"
+
+  [[params.nav]]
+    name = "About"
+    link = "/about"
+```
+
+Create `content/posts/hello-world.md`:
+
+```markdown
 ---
-title: "Spaceboy Theme: Configuration Reference"
-date: 2026-05-29
-draft: true
-tags: ["hugo", "theme", "configuration", "docs"]
+title: "Hello World"
+date: 2026-01-01
+draft: false
+tags: ["hugo"]
 categories: ["Tech"]
-showToc: True
-viewMode: docs
 ---
 
-Every parameter can be set in two places. **`hugo.toml [params]`** sets the site-wide default. **Front matter** on a single post overrides it. Front matter always wins.
+This is my first Spaceboy post.
+```
+
+Run the site:
+
+```bash
+hugo server -D
+```
+
+Open the local URL printed by Hugo. Remove `-D` when you do not want draft pages in the build.
+
+## Create content
+
+### Sections and `mainSections`
+
+Hugo uses the first directory under `content/` as the page type unless front matter sets `type`. For example, `content/posts/my-post.md` has type `posts`.
+
+`params.mainSections` controls which regular pages appear on the home page, in related posts, in search, and in share links. Add every content section that should behave like a post:
+
+```toml
+[params]
+  mainSections = ["posts", "notes", "docs"]
+```
+
+A standalone page such as `content/about.md` is not part of that list unless you give it a matching `type`.
+
+### Page bundles and images
+
+Use a page bundle when images belong to one post:
+
+```text
+content/
+└── posts/
+    └── my-post/
+        ├── index.md
+        ├── cover.webp
+        └── diagram.png
+```
+
+Reference bundle resources by relative path:
+
+```markdown
+![A description of the image](cover.webp)
+```
+
+The image render hook resizes bundle images to a width of 1200 pixels and emits width and height attributes. Files under `static/` are copied unchanged; reference them with a root-relative path such as `/images/cover.webp`.
+
+### Useful front matter
+
+```yaml
+---
+title: "Post title"
+date: 2026-01-01
+lastmod: 2026-02-01
+draft: false
+type: posts
+description: "A short description for search and social metadata."
+tags: ["hugo", "docs"]
+categories: ["Tech"]
+coverImage: "/images/cover.webp"
+---
+```
+
+- `description` overrides the generated meta description.
+- `coverImage` is shown above the title and used for social sharing.
+- `heroImage` is also shown above the title, with a taller maximum height.
+- `tags` and `categories` use Hugo taxonomies.
+- `series` links posts that share the same series name.
+- `author.homepage` links the site author name in the post meta line.
+
+## Parameter precedence
+
+Most display parameters use Hugo's parameter lookup: a page value overrides the same value in `hugo.toml [params]`. The reference below marks options that are read only from page front matter.
+
+`viewMode` supplies defaults. A non-empty page value normally overrides those defaults. There is one important exception: Hugo's `default` function treats `false` as empty. As a result, `false` does not disable a `true` view-mode default for `progressBar`, `dropCap`, `numberedHeadings`, `justify`, `noMeta`, `hideFooter`, or `showReadingTime`. Use CSS or a template override when you need to force one of those values off.
+
+The granular meta and footer switches are different. They check whether the page key exists, so an explicit `false` can override `noMeta` or `hideFooter`.
 
 ## Typography
 
@@ -64,26 +192,24 @@ epigraph: "Not one of these dreams has fulfilled me, nor have I expected them to
 
 For author attribution use the `{{</* epigraph */>}}` shortcode instead — see [Shortcodes](#shortcodes).
 
-### ViewMode (presets)
+### View modes
 
-Bundles font, layout, and meta display into a single param. Individual params still override.
+`viewMode` supplies a small set of layout and display defaults. It does not load a different template.
 
-| Mode | Font | Best for |
-|------|------|----------|
-| `docs` | Atkinson (default) | Tutorials, reference, code-heavy posts, papers |
-| `poem` | Atkinson (default) | Poetry (centred text) |
-| `goofy` | Atkinson (default) | Distraction-free reading, big fonts, no chrome |
-| `minimal` | Atkinson (default) | No footer, wide layout — scratch pads, unlisted pages |
-
-Removed modes: `prose` → use `font: serif`; `list` → use `font: sans`; `news` → use `research` + `font: sans`.
+| Mode | Defaults | Best for |
+|------|----------|----------|
+| `docs` | Numbered headings, reading time, progress bar, taller code blocks | Tutorials, reference, code-heavy posts |
+| `poem` | No meta or footer, centered text, larger type, narrower column | Poetry |
+| `goofy` | Drop cap, justified text, no meta or footer, larger type, static header | Stories and distraction-free reading |
+| `minimal` | No meta or footer, wide column, hidden site footer, `noindex` unless explicitly set | Scratch pages and unlisted pages |
 
 ```yaml
 viewMode: docs
 ```
 
-{{< note >}}
-`viewMode` sets CSS and template defaults. Explicit `font`, `contentWidth`, `showToc`, etc. always beat the mode.
-{{< /note >}}
+Only `docs`, `poem`, `goofy`, and `minimal` are recognized. Older mode names and named color palettes are not supported. Use `font`, `contentWidth`, and the display switches for other combinations.
+
+`docs` does not enable the table of contents. Add `showToc: true` when you want it. See [Parameter precedence](#parameter-precedence) before trying to disable a default with `false`.
 
 ## Layout
 
@@ -99,21 +225,22 @@ contentWidth: full     # 100% — comics, photography, full-bleed layouts
 `normal` (clamp up to 1200px) is a comfortable reading width. For even more space use `wide`.
 {{< /tip >}}
 
-### Cover Image
+### Cover and hero images
 
-A full-width hero image shown at the top of the post, above the title. Also used as `og:image` for social sharing.
-
-```yaml
-coverImage: "https://example.com/my-header-image.jpg"
-```
-
-### Lightbox (Image Zoom)
-
-When enabled, every image in the post gets click-to-zoom via Fancybox. No need to manually add `data-fancybox` attributes.
+Both images appear above the post title. `coverImage` is also used for Open Graph and structured-data images. `heroImage` allows a taller image but is not used as the social image.
 
 ```yaml
-lightbox: true
+coverImage: "/images/cover.webp"
+heroImage: "/images/tall-header.webp"
 ```
+
+Use one unless you need two different banners. For the site-wide social fallback, set `params.ogImage`.
+
+### Image and diagram zoom
+
+The built-in lightbox opens post-body images and Mermaid diagrams when clicked. It is implemented by the theme JavaScript; no Fancybox asset or `lightbox` front-matter key is required. Cover and hero images are excluded, as are images inside links.
+
+Set `legacyMode: true` to disable this enhancement and the other optional JavaScript behavior.
 
 ### Full-Bleed Images
 
@@ -177,15 +304,19 @@ numberedHeadings: true
 
 ### Hide Meta Block
 
-Removes the entire date/author/reading-time line — useful for poems, untitled pieces, and any post where publication metadata feels intrusive.
+`noMeta: true` defaults the date, author, and word-count switches to off. Reading time and last-modified values have their own switches, so also set those to off if you want no metadata at all.
 
 ```yaml
 noMeta: true
+showReadingTime: false
+showLastModified: false
 ```
+
+Because of Hugo's `default` behavior, `noMeta: false` cannot re-enable metadata hidden by a view mode that defaults it to true. Use the granular switches or CSS instead.
 
 ### Hide Post Title
 
-Suppresses the `<h1>` rendered from the `title:` front matter field. Use when providing a decorative title inside the post body via the `{{</* chapter */>}}` shortcode.
+Suppresses the `<h1>` rendered from the `title:` front matter field. Use when providing a decorative title inside the post body via the `chapter` shortcode. The exact key is `show-title`, with a hyphen; `showTitle` is not read by the current template.
 
 ```yaml
 show-title: false
@@ -199,7 +330,7 @@ Removes tags, related posts, ads, and comments from the bottom of the page. Usef
 hideFooter: true
 ```
 
-Set automatically by `viewMode: goofy`, `media`, and `poem`.
+Set automatically by `viewMode: goofy`, `viewMode: poem`, and `viewMode: minimal`.
 
 ### Granular Section Toggles
 
@@ -236,17 +367,13 @@ showTags: true
 showPostNav: true
 ```
 
-### Color Scheme
+### Color scheme
 
-Named colour palettes that override light and dark mode colours simultaneously. Does not change layout, fonts, or spacing — only CSS custom properties.
+Spaceboy has exactly two color states: light and dark. On first load it follows the operating-system preference. The header button or `t` key pins a choice for the current browser session; there is no palette picker and no third state.
 
-```yaml
-viewMode: Neon
-```
+Customize colors with the CSS variables in `themes/spaceboy/assets/css/index.css`, or override those variables from your site. See [Customize colors and typography](#customize-colors-and-typography).
 
-Available schemes: `90s`, `Modern`, `Neon`, `Anime`, `Maharaja`, `Nature`, `Galaxy`, `Ocean`, `BlackWhite`, `C-Looney-Tunes`, `C-Disney`, `Hacker`, `2d-game`.
-
-The per-page `author.homepage` param wraps the author name in a hyperlink in the post meta line. Falls back to plain text when unset.
+The per-page `author.homepage` param wraps the site author name in a hyperlink in the post meta line. It does not change the author name.
 
 ```yaml
 author:
@@ -452,19 +579,7 @@ Customise the KaTeX CSS CDN in `hugo.toml`:
 
 ```toml
 [params]
-  katexCSSCDN = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
-```
-
-### Fancybox (Image Lightbox)
-
-Every image in every post is automatically wrapped in a Fancybox lightbox link via the render-image hook. Click any image to open the full-resolution viewer with swipe/zoom. No config needed.
-
-Customise CDN URLs in `hugo.toml`:
-
-```toml
-[params]
-  fancyboxCSSCDN = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1/dist/fancybox/fancybox.css"
-  fancyboxJSCDN  = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1/dist/fancybox/fancybox.umd.js"
+  katexCSSCDN = "https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
 ```
 
 ### Mermaid (Diagrams)
@@ -487,9 +602,17 @@ Diagrams are **pre-rendered to SVGs at build time** via `scripts/render-mermaid-
 2. Run `npm run build:diagrams` — renders SVGs into `static/mermaid-cache/`
 3. Commit the new SVG and the updated `data/mermaid-manifest.json`
 
-### Code Export
+### Raw HTML
 
-Code blocks (both regular and Mermaid) include an **"Open as image"** button alongside the copy button. Clicking it opens the block in a new window with options to download as SVG or PNG.
+Use the `rawhtml` shortcode when you deliberately need raw HTML inside Markdown:
+
+```markdown
+{{< rawhtml >}}
+<div class="custom-panel">Custom HTML</div>
+{{< /rawhtml >}}
+```
+
+The shortcode bypasses Hugo escaping. Do not use it with untrusted content.
 
 ---
 
@@ -544,336 +667,564 @@ Adds `<meta name="robots" content="noindex">` so search engines skip this page.
 noindex: true
 ```
 
-### searchExclude
+### noSearch
 
-Excludes the page from `/index.json` — the site's search index. It won't show up in the search modal.
+Excludes a post from `/index.json`, the site's search index. The exact key is `noSearch`; `searchExclude` is not read by the current theme.
 
 ```yaml
-searchExclude: true
+noSearch: true
 ```
 
+Search also requires `JSON` in the home-page outputs, as shown in [Quick start](#quick-start).
+
 ---
 
-## Configurations by Content Type
+## Content recipes
 
-Complete front matter presets. Copy the block that matches your post type.
+Add the relevant keys to a normal front-matter block that already contains `title`, `date`, and `draft`.
 
-### Story / Short Story
+### Story or short story
 
 ```yaml
----
 viewMode: goofy
----
 ```
 
-Optionally add `dropCap: true` for the first-letter style.
+`goofy` already enables the drop cap and justified text. Open the body with an `epigraph` shortcode when needed.
 
-### Novel Chapter
+### Novel chapter
 
 ```yaml
----
 viewMode: goofy
-progressBar: true
 show-title: false
----
 ```
 
-Open the post body with the `{{</* chapter */>}}` and `{{</* epigraph */>}}` shortcodes to replace the suppressed front matter title.
+Use the `chapter` shortcode for the visible title and the `epigraph` shortcode for an opening quotation.
 
 ### Essay
 
 ```yaml
----
-viewMode: goofy
----
+font: serif
+justify: true
+contentWidth: normal
 ```
 
-### Research Paper
+### Research paper
 
 ```yaml
----
 viewMode: docs
+showToc: true
 showLastModified: true
+justify: true
 abstract: "One paragraph summary of the paper."
----
 ```
 
-Use `docs` for papers, surveys, and research writing — enable `showToc` and `justify` explicitly if desired.
-
-### Technical Documentation
+### Technical documentation
 
 ```yaml
----
 viewMode: docs
+showToc: true
 showLastModified: true
----
+numberedHeadings: true
 ```
 
-Use `{{</* note */>}}` / `{{</* tip */>}}` / `{{</* warning */>}}` / `{{</* danger */>}}` throughout.  
-Use `{{</* details */>}}` for optional or reference content.  
-Use `{{</* kbd */>}}` for keyboard shortcuts.
+Use callouts for cautions, `details` for optional material, and `kbd` for keyboard shortcuts.
 
-### Tutorial (step-by-step)
+### Step-by-step tutorial
 
 ```yaml
----
 viewMode: docs
----
+showToc: true
 ```
 
-Structure h2 headings as steps — `## 1. Install`, `## 2. Configure`, `## 3. Run`.
+Structure headings as `## 1. Install`, `## 2. Configure`, and `## 3. Run`.
 
 ### Recipe
 
 ```yaml
----
 font: sans
----
 ```
 
-Wrap the ingredient list in `{{</* details title="Ingredients" */>}}` so the page doesn't open with a wall of text.
+Put ingredients in a `details` shortcode and instructions in normal Markdown.
 
-### Review (book / anime / game)
+### Review
 
 ```yaml
----
 font: sans
----
 ```
 
-Use `{{</* rating 8 10 */>}}` for scores and `{{</* spoiler */>}}` for plot details.
+Use `rating` for the score and `spoiler` for plot details.
 
-### Comic / Visual
+### Comic or visual post
 
+```yaml
+contentWidth: full
+imageFullBleed: true
+showToc: false
+hideFooter: true
+```
 
+Place each image on its own line. Use descriptive alt text. The built-in lightbox opens body images when clicked.
 
 ### Poem
 
 ```yaml
----
 viewMode: poem
 show-title: false
----
 ```
 
-Use `{{</* chapter */>}}` for the title and `{{</* poem */>}}` for each stanza group.
+Use `chapter` for a decorative title and `poem` for centered stanzas. End each line with two spaces for a Markdown line break.
 
-### Devlog / Changelog
+### Devlog or changelog
 
 ```yaml
----
 viewMode: docs
 showLastModified: true
----
 ```
 
-Structure with `## Week of YYYY-MM-DD` or `## vX.Y.Z` headings.
+Use `## Week of YYYY-MM-DD` or `## vX.Y.Z` headings.
 
-### Reading List / Link Log
+### Reading list or link log
 
 ```yaml
----
 font: sans
----
+showToc: true
 ```
 
-### Photo Essay
+### Photo essay
 
 ```yaml
----
 viewMode: minimal
-coverImage: "https://..."
+noindex: false
+coverImage: "/images/cover.webp"
 font: serif
----
 ```
 
----
+`minimal` defaults to `noindex`. Set `noindex: false` explicitly when the page should be indexed.
 
-## Full Parameter Reference
+### Multi-part series
+
+Give every part the same `series` value:
 
 ```yaml
----
-title: "Post Title"
-date: 2026-01-01
-lastmod: 2026-05-29
-
-# ── Typography ──────────────────────────────────
-font: mono                # mono | serif | sans | CSS font-family string (default: Atkinson Hyperlegible sans-serif)
-dropCap: false            # large first letter on first paragraph
-justify: false            # justify paragraph text
-epigraph: ""              # opening quote rendered before body
-
-# ── ViewMode & Color ────────────────────────────
-viewMode: ""               # docs | poem | goofy | minimal | <PaletteName>
-
-# ── Layout ──────────────────────────────────────
-contentWidth: normal      # normal | wide | full
-coverImage: ""            # hero image URL (also sets og:image)
-imageFullBleed: false     # stretch images to viewport width
-lightbox: false           # enable click-to-zoom on all images
-codeMaxHeight: "32rem"    # max-height of code blocks; "none" to remove
-
-# ── Meta display ────────────────────────────────
-progressBar: false
-showReadingTime: false
-showLastModified: false
-noMeta: false             # hide the entire meta line (individual toggles below beat it)
-show-title: true          # hide the h1 rendered from front matter title
-showDate: true            # granular: show publish date (respects noMeta)
-showAuthor: true          # granular: show author name (respects noMeta)
-showWordCount: true       # granular: show word count (respects noMeta)
-
-# ── Footer display ──────────────────────────────
-hideFooter: false         # hide tags, share, related, comments, nav (individual toggles below beat it)
-showTags: true            # show tags section (respects hideFooter)
-showShare: true           # show social share buttons (respects hideFooter)
-showRelatedPosts: true    # show related posts section (respects hideFooter)
-showPostNav: true         # show prev/next navigation (respects hideFooter)
-showComments: true        # show comments section (respects hideFooter)
-author:
-  homepage: ""            # wraps author name in a link when set
-
-# ── Structure ───────────────────────────────────
-showToc: false
-numberedHeadings: false
-
-# ── Content ─────────────────────────────────────
-abstract: ""
-hrStyle: small            # small | full | CSS length
-
-# ── Per-post injections ────────────────────────
-customCSS: ""             # inline CSS injected in <head>
-customJS: ""              # inline JS injected before </body>
-customHead: ""            # raw HTML injected in <head>
-
-# ── SEO ─────────────────────────────────────────
-noindex: false            # add <meta name="robots" content="noindex">
-searchExclude: false      # exclude from /index.json search index
----
-
-## Site-wide Configuration (`hugo.toml [params]`)
-
-These are set in `hugo.toml` under `[params]` and apply across the entire site.
-
-### Main Sections
-
-```toml
-mainSections = ["posts"]   # which content types appear on the homepage
+series: "Building a Hugo theme"
 ```
 
-### Author
+The theme orders parts by date and shows a series navigation box when more than one page shares the name.
+
+## Front-matter reference
+
+`Page/site` means the template uses Hugo's parameter lookup, so the same key can also be set under `[params]`. `Page only` means the current template reads the key directly from the page. See [Parameter precedence](#parameter-precedence) for the `false` caveat.
+
+### Core content
+
+| Key | Type | Scope | Purpose |
+|---|---|---|---|
+| `title` | string | Page only | Post title and default social title |
+| `date` | date/time | Page only | Publication date and ordering |
+| `lastmod` | date/time | Page only | Modified date; Hugo may also derive it |
+| `draft` | bool | Page only | Exclude from normal builds |
+| `type` | string | Page only | Override the section-derived content type |
+| `description` | string | Page only | Meta and social description |
+| `tags` | list | Page only | Hugo tag taxonomy |
+| `categories` | list | Page only | Hugo category taxonomy |
+| `series` | string | Page only | Group posts into an ordered series |
+| `coverImage` | string | Page only | Banner above the title and social-image fallback |
+| `heroImage` | string | Page only | Taller banner above the title |
+| `epigraph` | string | Page only | Simple opening quotation |
+| `abstract` | string | Page only | Summary block before the body |
+| `author.homepage` | string | Page only | Link on the site author name |
+
+### Layout and typography
+
+| Key | Type | Scope | Values or effect |
+|---|---|---|---|
+| `viewMode` | string | Page/site | `docs`, `poem`, `goofy`, `minimal` |
+| `font` | string | Page only | `serif`, `sans`, `mono`, or a CSS font stack |
+| `dropCap` | bool | Page/site | Large first letter |
+| `justify` | bool | Page/site | Justified paragraphs with hyphenation |
+| `contentWidth` | string | Page/site | `normal`, `wide`, `full`, or a CSS width |
+| `imageFullBleed` | bool | Page/site | Let body images extend to the viewport |
+| `codeMaxHeight` | string | Page/site | CSS length, or `none` |
+| `hrStyle` | string | Page/site | `small`, `full`, or a CSS width |
+| `showToc` | bool | Page only | Show desktop sidebars and the mobile TOC |
+| `tocTitle` | string | Page/site | Main TOC label; default `Contents` |
+| `tocSubTitle` | string | Page/site | Subsection label; default `In this section` |
+| `numberedHeadings` | bool | Page/site | Add CSS heading counters |
+| `progressBar` | bool | Page/site | Show reading progress |
+
+### Metadata and footer
+
+| Key | Type | Scope | Effect |
+|---|---|---|---|
+| `showReadingTime` | bool | Page/site | Show estimated reading time |
+| `showLastModified` | bool | Page/site | Show updated date when it differs |
+| `noMeta` | bool | Page/site | Default date, author, and word count off |
+| `show-title` | bool | Page only | Set to `false` to hide the rendered H1 |
+| `showDate` | bool | Page only | Override the date switch |
+| `showAuthor` | bool | Page only | Override the author switch |
+| `showWordCount` | bool | Page only | Override the word-count switch |
+| `hideFooter` | bool | Page/site | Default all footer switches off |
+| `showTags` | bool | Page only | Show tags |
+| `showShare` | bool | Page only | Show share controls |
+| `showRelatedPosts` | bool | Page only | Show related posts |
+| `showPostNav` | bool | Page only | Show older/newer navigation |
+| `showComments` | bool | Page only | Show Disqus when configured |
+
+### Cards and thumbnails
+
+| Key | Type | Scope | Effect |
+|---|---|---|---|
+| `thumbnail` | string | Page/site | Explicit list/catalog image |
+| `showThumbnailInList` | bool | Page/site | Show an image in list layout |
+| `showThumbnailInCatalog` | bool | Page/site | Use an image as the catalog-card background |
+
+When `thumbnail` is absent and either thumbnail switch is on, the theme uses the first Markdown image it finds in the raw content.
+
+### Page code and search controls
+
+| Key | Type | Scope | Effect |
+|---|---|---|---|
+| `customCSS` | string | Page/site | Inline CSS in the page head |
+| `customJS` | string | Page/site | Inline JavaScript before `</body>` |
+| `customHead` | string | Page/site | Raw HTML in the page head |
+| `noindex` | bool | Page/site | Add a robots `noindex` tag |
+| `noSearch` | bool | Page only | Exclude the post from `/index.json` |
+
+The current theme does not read `lightbox`, `searchExclude`, `showTitle`, `leftSidebarContent`, or `rightSidebarContent`. Image zoom is built in, and the TOC partials render their own navigation.
+
+## Site-wide configuration
+
+Set site options at the top level of `hugo.toml` or under `[params]` as shown. Page front matter can override parameters that use Hugo's parameter lookup.
+
+### Site metadata
 
 ```toml
-[params.author]
-  name = "Your Name"       # displayed in post meta
+baseURL = "https://example.com/"
+title = "My Site"
+theme = "spaceboy"
+
+[params]
+  description = "Site description for search and social metadata."
+  headTitle = "My Blog"
+  favicon = "/favicon.ico"
+  ogImage = "/images/og-default.png"
+  mainSections = ["posts"]
+
+  [params.author]
+    name = "Your Name"
 ```
 
-### Head Title
+- `headTitle` wins over `author.name`, which wins over the site `title` in the header.
+- `favicon` is emitted as supplied. Use a root-relative path or a full URL.
+- `ogImage` is the fallback Open Graph and JSON-LD image.
+- A page's `coverImage` wins over `params.ogImage`.
+- The theme's Twitter card template uses Hugo's standard `images` front matter. `coverImage` and `ogImage` do not set `twitter:image`.
 
-```toml
-headTitle = "My Blog"      # text shown in the site header link (defaults to author name, then site title)
-```
-
-### Navigation
+### Navigation and social links
 
 ```toml
 [[params.nav]]
   name = "Home"
   link = "/"
+
 [[params.nav]]
   name = "About"
   link = "/about"
-```
 
-### Social Links
-
-```toml
 [[params.socials]]
-  name = "GitHub"
+  name = "github"
   link = "https://github.com/username"
+
 [[params.socials]]
-  name = "RSS"
+  name = "rss"
   link = "/index.xml"
 ```
 
-Supported icon names: `GitHub`, `Twitter`, `LinkedIn`, `RSS`, `Email`.
+Built-in social icons are `github`, `twitter`, `linkedin`, `rss` or `feed`, and `email` or `mail`. Names are case-insensitive. An unknown name gets a generic globe icon.
 
-### Footer Links
+### Footer links and attribution
 
 ```toml
 [[params.footerLinks]]
   name = "Privacy"
   link = "/privacy"
+
 [[params.footerLinks]]
-  name = "Colophon"
-  link = "/colophon"
+  name = "Spaceboy"
+  link = "https://inxeoz.com/"
 ```
 
-### Features
+The default footer shows the current year, site author, and “All rights reserved.” Override `layouts/partials/footer.html` to change that markup.
+
+The Spaceboy license requires a visible credit link to `https://inxeoz.com/`. Keep a link like the Spaceboy footer link above when you customize the footer.
+
+### Feature switches
+
+| Parameter | Default | Effect |
+|---|---|---|
+| `enableCopyCode` | `true` | Code copy button |
+| `lazyImage` | `false` | Initialize the JavaScript lazy-load helper on post pages; rendered Markdown images already use native `loading="lazy"` |
+| `showCategories` | `false` | Category links on home-page cards |
+| `enableLayoutToggle` | `false` | Grid/list switch on home, list, section, and taxonomy pages |
+| `enableSearch` | `true` | Search button and modal |
+| `enableTableResize` | `true` | Drag or keyboard-resize table columns and row height |
+| `enableCDNFallback` | `true` | Controls the KaTeX local/CDN choice described below |
+| `legacyMode` | `false` | Disable optional JavaScript enhancements, including search and lightbox |
+| `showReadingTime` | `false` | Site default for reading time |
+| `TwitterCards` | `true` | Enable Hugo's Twitter-card template |
 
 ```toml
-enableCopyCode = true      # show copy button on code blocks (default: true)
-lazyImage = true           # lazy-load images (default: true)
-showCategories = true      # show category links on homepage cards
-enableCDNFallback = true   # use CDN for Fancybox/KaTeX when available
-legacyMode = false         # disable all JS enhancements
-showReadingTime = false    # global default for "X min read"
-enableTableResize = true   # drag table column dividers + bottom row-height handle
+[params]
+  enableCopyCode = true
+  lazyImage = true
+  showCategories = true
+  enableLayoutToggle = true
+  enableSearch = true
+  enableTableResize = true
+  legacyMode = false
+  showReadingTime = false
+  TwitterCards = true
 ```
 
-Table resizing is **session-only** and rides on the table's own borders — no extra handles. Hover a column separator in the header row and the gridline lights up: drag it to widen/narrow columns (neighbours absorb the delta, so the total width holds). Hover the table's bottom edge and the border lights up: drag down to add vertical space inside every row, or up to remove it. Keyboard: tab to a separator and use `←`/`→` (columns) or `↑`/`↓` (rows), holding `Shift` for larger steps; `Esc` cancels an in-progress drag. Reloading the page restores the natural layout.
+Table resizing is session-only. Hover a header-column border and drag to resize columns. Hover the table's bottom edge and drag to change row height. Keyboard users can focus a separator and use arrow keys; hold `Shift` for larger steps and press `Esc` to cancel.
 
 ### Search
 
-Client-side search powered by [Fuse.js](https://fusejs.io). Press `Ctrl+K` (or the search icon in the header) to open the modal.
+Search uses Fuse.js and the generated `/index.json`. Hugo does not emit that file unless JSON is enabled for the home page:
 
 ```toml
-enableSearch = true            # show search button + modal (default: true)
-fuseJSLocal = ""               # self-hosted Fuse.js path under static/
-fuseJSCDN = "https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"
-fuseJSCDNIntegrity = ""        # optional SRI hash for the CDN script
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
 ```
-
-- Search is **lazy**: Fuse.js and `/index.json` load on the first keystroke, not on page load.
-- **Idle state**: with an empty query the modal shows the 5 most recent posts, server-rendered by Hugo (no extra requests, no Fuse needed). They're navigable with `↑↓` / `↵` and clickable. Typing replaces them with live results; clearing the input restores them.
-- The search index is the site's `/index.json` (prefixed by `staticPrefix` if set). Exclude a page from it with `searchExclude: true` (see [searchExclude](#searchexclude)).
-- `legacyMode: true` disables search entirely.
-
-### Content Injection
-
-Raw HTML injected at specific points:
 
 ```toml
-postHeaderContent = ""     # before .Content inside the post
-postFooterContent = ""     # after .Content, before related posts
-postAds = ""               # after related posts, before comments
-extraHead = ""             # before </head>
-extraBody = ""             # before </body>
+[params]
+  enableSearch = true
+  fuseJSLocal = "/vendor/fuse.min.js"
+  fuseJSCDN = "https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"
+  fuseJSCDNIntegrity = ""
 ```
 
-### Disqus
+- `fuseJSLocal` is tried first. If it fails, the CDN URL is tried. This fallback is independent of `enableCDNFallback`.
+- `fuseJSCDNIntegrity` is an optional SRI hash for the CDN script.
+- Press `Ctrl+K`, `Cmd+K`, or the search button to open the modal.
+- The empty state shows five recent posts from `mainSections`.
+- Search covers title, tags, categories, summary, date, and Markdown image alt text.
+- Exclude one post with `noSearch: true`.
+- `legacyMode: true` disables search even if `enableSearch` is true.
+
+### Comments
+
+Spaceboy supports Disqus only:
 
 ```toml
-disqus = "your-shortname"  # string — NOT a boolean
+[params]
+  disqus = "your-shortname"
 ```
 
-### Static Files
+Comments appear only when the page type is in `mainSections`, `showComments` is on, `hideFooter` is off, and `disqus` is set.
+
+### Site-wide HTML injection
 
 ```toml
-staticPrefix = ""          # CDN prefix for RSS and local vendor files
-extraCSSFiles = ["css/custom.css"]   # additional CSS files to bundle
+[params]
+  postHeaderContent = ""
+  postFooterContent = ""
+  postAds = ""
+  extraHead = ""
+  extraBody = ""
 ```
 
-### KaTeX / Fancybox CDN Overrides
+- `postHeaderContent`: inside the post, before Markdown content.
+- `postFooterContent`: after Markdown content, before related posts.
+- `postAds`: after related posts, before comments.
+- `extraHead`: before `</head>`.
+- `extraBody`: before `</body>`.
+
+For code that should apply to every page, you can also use `[params] customHead`, `customCSS`, and `customJS`. These use the same rendering paths as the per-page keys.
+
+### Additional CSS and static prefixes
 
 ```toml
-# KaTeX CSS (still loaded for rendered math styling — no KaTeX JS at runtime)
-katexCSSCDN = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
-
-# Fancybox
-fancyboxCSSCDN = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1/dist/fancybox/fancybox.css"
-fancyboxJSCDN  = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1/dist/fancybox/fancybox.umd.js"
+[params]
+  extraCSSFiles = ["css/override.css"]
+  staticPrefix = ""
 ```
 
-For self-hosted assets, append `Local` to the key (e.g. `katexCSSLocal`, `fancyboxJSLocal`) pointing to a path under `static/`.
+`extraCSSFiles` contains paths relative to the site's `assets/` directory. The theme bundles `css/index.css` first and appends each listed file, so an override file can change theme variables and selectors.
+
+`staticPrefix` is prepended to the RSS URL and `/index.json` search request, and is used for DNS prefetch. It does **not** rewrite bundled CSS, JavaScript, fonts, images, or `fuseJSLocal`. Use a full URL for those assets when hosting them elsewhere.
+
+### KaTeX CSS
+
+KaTeX HTML is pre-rendered into `data/katex-cache.json`; no KaTeX JavaScript loads at runtime. The page still needs KaTeX CSS.
+
+```toml
+[params]
+  katexCSSCDN = "https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
+  katexCSSLocal = "/vendor/katex/katex.min.css"
+  enableCDNFallback = true
 ```
+
+The current selection logic is:
+
+- With `enableCDNFallback = true` and a different `katexCSSLocal`, the local file wins.
+- Otherwise, `katexCSSCDN` wins.
+- `katexCSS` is accepted as an alias for `katexCSSLocal`.
+
+Place local files under `static/`, for example `static/vendor/katex/katex.min.css`. Keep the CSS version compatible with the KaTeX version used to generate the cache.
+
+## Customize colors and typography
+
+### Override CSS variables
+
+Create `assets/css/override.css` in your site:
+
+```css
+:root {
+  --bg-color: #f7f5f0;
+  --text-color: #24211d;
+  --link-color: #9a3412;
+  --border-color: #d6d3d1;
+  --code-bg: #e7e5e4;
+  --font-body: Georgia, "Times New Roman", serif;
+  --content-max-width: 72rem;
+  --radius-md: 10px;
+}
+
+[data-theme="dark"] {
+  --bg-color: #1c1917;
+  --text-color: #e7e5e4;
+  --link-color: #fdba74;
+  --border-color: #44403c;
+  --code-bg: #292524;
+}
+```
+
+Load it after the theme CSS:
+
+```toml
+[params]
+  extraCSSFiles = ["css/override.css"]
+```
+
+The main light/dark variables are defined at the top of `themes/spaceboy/assets/css/index.css`. Other useful groups include `--font-*`, `--spacing-*`, `--radius-*`, `--toc-*`, `--mermaid-*`, and syntax colors `--syn-*`.
+
+### Fonts
+
+Atkinson Hyperlegible is loaded from Google Fonts for body text. JetBrains Mono is bundled with the theme for code. The page-only `font` key changes the CSS stack but does not download a font.
+
+To use a custom font globally, define `@font-face` in your override CSS and set `--font-body`. To self-host Atkinson or remove the Google Fonts request, override the theme's `layouts/partials/head.html`; CSS alone cannot remove that external stylesheet.
+
+## Customize templates and components
+
+Hugo gives the site's `layouts/` directory priority over the theme's layouts. Copy only the file you need to change, then edit the site copy. This keeps theme updates easier to manage.
+
+```text
+layouts/
+├── _default/
+│   └── single.html
+├── partials/
+│   ├── header.html
+│   └── footer.html
+└── shortcodes/
+    └── warning.html
+```
+
+Common changes:
+
+- Change article structure: override `layouts/_default/single.html` or `layouts/partials/post-article.html`.
+- Change navigation: override `layouts/partials/header.html`.
+- Change footer text or licensing credit: override `layouts/partials/footer.html`.
+- Change home/list cards: override `layouts/index.html`, `layouts/_default/list.html`, or `layouts/partials/post-list.html`.
+- Change one shortcode: create a site file with the same name under `layouts/shortcodes/`.
+- Change search markup: override `layouts/partials/search-modal.html`.
+- Change SEO output: override `layouts/partials/head.html` or `layouts/partials/seo.html`.
+
+To change core JavaScript, place a replacement at the same asset path in your site, such as `assets/js/features.js`. For small additions, prefer `[params] customJS` or a per-page `customJS` block.
+
+## Static files, data, and raw Markdown output
+
+Files under `static/` are served from the site root. Use this for favicons, vendor libraries, downloadable files, and files that must not be processed by Hugo.
+
+Files under `data/` are available through `site.Data`. Spaceboy reads `data/katex-cache.json` during math rendering and generates `data/mermaid-manifest.json` for build bookkeeping. The Mermaid template reads SVGs directly from `static/mermaid-cache/`.
+
+To publish each page's original Markdown as `<page-url>.md`, enable the optional output format:
+
+```toml
+[outputFormats.markdown]
+  baseName = ""
+
+[outputs]
+  page = ["HTML", "markdown"]
+```
+
+The output uses `.RawContent`: front matter is removed, while shortcodes, math, and Mermaid stay in source form. On Cloudflare Pages, add a `_headers` file to serve `.md` as `text/markdown` rather than as a download.
+
+## Build diagrams and math
+
+Both systems render before Hugo builds the site. A missing cache entry falls back to source text; the browser does not render it later.
+
+The scripts assume this exact layout:
+
+```text
+site/
+├── content/
+├── data/
+├── static/
+└── themes/
+    └── spaceboy/
+        ├── package.json
+        └── scripts/
+```
+
+Install the theme's Node dependencies and run its build script:
+
+```bash
+cd themes/spaceboy
+npm install
+npm run build:diagrams
+cd ../..
+hugo --minify
+```
+
+`build:diagrams` runs both renderers:
+
+- Mermaid writes `static/mermaid-cache/<sha256>.svg` and `data/mermaid-manifest.json`.
+- KaTeX writes `data/katex-cache.json`.
+
+Commit the generated cache files when they are part of your source repository. Hosts that run only `hugo` can then serve diagrams and math without Node or Chrome.
+
+Mermaid rendering needs a compatible Node release and Chrome or Chromium. The script can use Puppeteer's browser, a system browser, or `PUPPETEER_EXECUTABLE_PATH`. If you install the theme through Hugo Modules or put it somewhere other than `themes/spaceboy`, adjust the scripts' site-root calculation before using them.
+
+### Goldmark math configuration
+
+Math delimiters also need Goldmark passthrough enabled in the **site** config:
+
+```toml
+[markup.goldmark.extensions.passthrough]
+  enable = true
+
+  [markup.goldmark.extensions.passthrough.delimiters]
+    block = [["$$", "$$"], ["\\[", "\\]"]]
+    inline = [["$", "$"], ["\\(", "\\)"]]
+```
+
+The cache scanner recognizes `$...$`, `$$...$$`, `\(...\)`, `\[...\]`, and `{{< katex >}}` shortcodes. Inline `$...$` must contain a LaTeX command or `^`/`_`; use `\(...\)` for a bare expression such as `\( n = 10 \)`.
+
+## Security and troubleshooting
+
+Several options insert trusted HTML, CSS, or JavaScript without Hugo's normal escaping: `customHead`, `customCSS`, `customJS`, `extraHead`, `extraBody`, `postHeaderContent`, `postFooterContent`, `postAds`, and the `rawhtml` shortcode. Keep them out of untrusted content and review third-party code before adding it.
+
+| Symptom | Check |
+|---|---|
+| Home page is empty | Put posts in a section listed in `params.mainSections` and remove `draft: true` |
+| Search opens but finds nothing | Enable `JSON` in home-page outputs and confirm `/index.json` is generated |
+| A post is missing from search | Check `draft`, section membership, and `noSearch` |
+| Title still appears | Use `show-title: false`, not `showTitle: false` |
+| A view-mode default will not turn off | `false` falls through Hugo's `default`; use CSS or a template override |
+| Mermaid shows its source code | Run `npm run build:diagrams` and deploy `static/mermaid-cache/` |
+| Math shows its source text | Enable Goldmark passthrough, rebuild the KaTeX cache, and check KaTeX CSS |
+| Images do not open | Enable JavaScript; `legacyMode: true` disables the lightbox |
+| Local Fuse.js is ignored | Verify the path and remember that `staticPrefix` does not rewrite it |
+| Theme updates overwrite changes | Move site-specific CSS, templates, and JavaScript into the site project |
