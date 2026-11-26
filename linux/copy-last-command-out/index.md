@@ -1,3 +1,7 @@
+---
+draft: true
+---
+
 # `cwdsync` — Setup Guide
 
 A pty wrapper that logs your shell session, plus a small shadow of Omarchy's cwd helper so new terminals open in the right directory even though the logging wrapper sits between the terminal and the shell.
