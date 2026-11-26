@@ -51,6 +51,8 @@ ignoreFiles = ["spaceboy/content/.*"]
     link = "/about"
 ```
 
+The theme repository includes demo content. The `ignoreFiles` rule above excludes it. If you rename the theme directory, update the `spaceboy` part of that pattern.
+
 Create `content/posts/hello-world.md`:
 
 ```markdown
@@ -79,11 +81,10 @@ Open the local URL printed by Hugo. Remove `-D` when you do not want draft pages
 
 Hugo uses the first directory under `content/` as the page type unless front matter sets `type`. For example, `content/posts/my-post.md` has type `posts`.
 
-`params.mainSections` controls which regular pages appear on the home page, in related posts, in search, and in share links. Add every content section that should behave like a post:
+`mainSections` controls which regular pages appear on the home page, in related posts, in search, and in share links. Add every content section that should behave like a post:
 
 ```toml
-[params]
-  mainSections = ["posts", "notes", "docs"]
+mainSections = ["posts", "notes", "docs"]
 ```
 
 A standalone page such as `content/about.md` is not part of that list unless you give it a matching `type`.
@@ -904,13 +905,14 @@ Set site options at the top level of `hugo.toml` or under `[params]` as shown. P
 baseURL = "https://example.com/"
 title = "My Site"
 theme = "spaceboy"
+mainSections = ["posts"]
+ignoreFiles = ["spaceboy/content/.*"]
 
 [params]
   description = "Site description for search and social metadata."
   headTitle = "My Blog"
   favicon = "/favicon.ico"
   ogImage = "/images/og-default.png"
-  mainSections = ["posts"]
 
   [params.author]
     name = "Your Name"
@@ -1220,7 +1222,7 @@ Several options insert trusted HTML, CSS, or JavaScript without Hugo's normal es
 
 | Symptom | Check |
 |---|---|
-| Home page is empty | Put posts in a section listed in `params.mainSections` and remove `draft: true` |
+| Home page is empty | Put posts in a section listed in `mainSections` and remove `draft: true` |
 | Search opens but finds nothing | Enable `JSON` in home-page outputs and confirm `/index.json` is generated |
 | A post is missing from search | Check `draft`, section membership, and `noSearch` |
 | Title still appears | Use `show-title: false`, not `showTitle: false` |
