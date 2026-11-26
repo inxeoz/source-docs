@@ -134,9 +134,9 @@ coverImage: "/images/cover.webp"
 
 Most display parameters use Hugo's parameter lookup: a page value overrides the same value in `hugo.toml [params]`. The reference below marks options that are read only from page front matter.
 
-`viewMode` supplies defaults. A non-empty page value normally overrides those defaults. There is one important exception: Hugo's `default` function treats `false` as empty. As a result, `false` does not disable a `true` view-mode default for `progressBar`, `dropCap`, `numberedHeadings`, `justify`, `noMeta`, `hideFooter`, or `showReadingTime`. Use CSS or a template override when you need to force one of those values off.
+`viewMode` supplies defaults. An explicit page value overrides those defaults, including `false`. For example, a docs page can set `progressBar: false`, `showReadingTime: false`, or `numberedHeadings: false`.
 
-The granular meta and footer switches are different. They check whether the page key exists, so an explicit `false` can override `noMeta` or `hideFooter`.
+The granular meta and footer switches also override `noMeta` or `hideFooter`. One visual exception is `goofy`: its CSS hides metadata and footer elements with `!important`, so template switches alone do not bring them back. Override that CSS or the head partial when you need a different goofy layout.
 
 ## Typography
 
@@ -312,7 +312,7 @@ showReadingTime: false
 showLastModified: false
 ```
 
-Because of Hugo's `default` behavior, `noMeta: false` cannot re-enable metadata hidden by a view mode that defaults it to true. Use the granular switches or CSS instead.
+An explicit `noMeta: false` overrides a view-mode default. In `goofy`, the mode's CSS still hides metadata with `!important`; use a CSS or template override to change that.
 
 ### Hide Post Title
 
@@ -813,7 +813,7 @@ The theme orders parts by date and shows a series navigation box when more than 
 
 ## Front-matter reference
 
-`Page/site` means the template uses Hugo's parameter lookup, so the same key can also be set under `[params]`. `Page only` means the current template reads the key directly from the page. See [Parameter precedence](#parameter-precedence) for the `false` caveat.
+`Page/site` means the template uses Hugo's parameter lookup, so the same key can also be set under `[params]`. `Page only` means the current template reads the key directly from the page.
 
 ### Core content
 
@@ -1222,7 +1222,7 @@ Several options insert trusted HTML, CSS, or JavaScript without Hugo's normal es
 | Search opens but finds nothing | Enable `JSON` in home-page outputs and confirm `/index.json` is generated |
 | A post is missing from search | Check `draft`, section membership, and `noSearch` |
 | Title still appears | Use `show-title: false`, not `showTitle: false` |
-| A view-mode default will not turn off | `false` falls through Hugo's `default`; use CSS or a template override |
+| `goofy` still hides metadata after a switch is enabled | Its mode CSS uses `!important`; override the CSS or head partial |
 | Mermaid shows its source code | Run `npm run build:diagrams` and deploy `static/mermaid-cache/` |
 | Math shows its source text | Enable Goldmark passthrough, rebuild the KaTeX cache, and check KaTeX CSS |
 | Images do not open | Enable JavaScript; `legacyMode: true` disables the lightbox |
