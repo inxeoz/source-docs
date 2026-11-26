@@ -87,7 +87,7 @@ Hugo uses the first directory under `content/` as the page type unless front mat
 mainSections = ["posts", "notes", "docs"]
 ```
 
-A standalone page such as `content/about.md` is not part of that list unless you give it a matching `type`.
+A standalone page such as `content/about.md` is not part of that list unless you give it a matching `type`. Taxonomy term pages are not universally filtered by `mainSections`, and series navigation can include matching pages from other sections.
 
 ### Page bundles and images
 
@@ -193,7 +193,7 @@ A centred italic quote rendered before the post body. Set directly in front matt
 epigraph: "Not one of these dreams has fulfilled me, nor have I expected them to."
 ```
 
-For author attribution use the `{{</* epigraph */>}}` shortcode instead — see [Shortcodes](#shortcodes).
+For author attribution use the `{{< epigraph >}}` shortcode instead — see [Shortcodes](#shortcodes).
 
 ### View modes
 
@@ -450,120 +450,134 @@ hrStyle: 40%     # any CSS length value
 
 ## Shortcodes
 
+Use angle-bracket delimiters as shown. The Mermaid and KaTeX cache scanners recognize these forms; percent-delimited forms can render in Hugo but normally miss the prebuilt cache.
+
 ### Callouts
 
-Five variants: `note`, `tip`, `warning`, `danger`, `info`. All accept an optional `title` param.
+Five variants are available: `note`, `tip`, `warning`, `danger`, and `info`. Each accepts an optional `title`.
 
-```
-{{</* note */>}} Information worth highlighting. {{</* /note */>}}
-{{</* tip title="Hint" */>}} A helpful suggestion. {{</* /tip */>}}
-{{</* warning */>}} Caution before proceeding. {{</* /warning */>}}
-{{</* danger */>}} Potential data loss or breakage. {{</* /danger */>}}
-{{</* info */>}} Neutral supplemental context. {{</* /info */>}}
+```markdown
+{{< note >}} Information worth highlighting. {{< /note >}}
+{{< tip title="Hint" >}} A helpful suggestion. {{< /tip >}}
+{{< warning >}} Caution before proceeding. {{< /warning >}}
+{{< danger >}} Potential data loss or breakage. {{< /danger >}}
+{{< info >}} Neutral supplemental context. {{< /info >}}
 ```
 
-{{< danger title="Irreversible" >}}
-`git reset --hard` discards all uncommitted changes permanently.
-{{< /danger >}}
+> **Danger:** `git reset --hard` discards uncommitted changes permanently.
 
 ### Epigraph
 
-A centred italic opening quote. Accepts `author` and `source` params.
+A centered italic opening quote. Accepts `author` and `source`.
 
-```
-{{</* epigraph author="Le Guin" source="The Dispossessed" */>}} There was a wall. {{</* /epigraph */>}}
-```
-
-For multi-line quotes, write the shortcode tags on their own lines. Hugo processes them correctly when the inner content is on a separate line.
-
-### Chapter Title
-
-A decorative chapter heading. Use with `show-title: false` so the front matter title is suppressed.
-
-```
-{{</* chapter number="Chapter Three" */>}} The Long Way Home {{</* /chapter */>}}
+```markdown
+{{< epigraph author="Le Guin" source="The Dispossessed" >}}
+There was a wall.
+{{< /epigraph >}}
 ```
 
-Renders a small caps chapter label above the main title text.
+For a simple quote without attribution, use the `epigraph` front-matter string instead.
+
+### Chapter title
+
+A decorative chapter heading. Use it with `show-title: false` when it replaces the front-matter title.
+
+```markdown
+{{< chapter number="Chapter Three" >}} The Long Way Home {{< /chapter >}}
+```
 
 ### Spoiler
 
-A collapsible `<details>` block. Default label is "Spoiler — click to reveal".
+A collapsible block. The default label is “Spoiler — click to reveal.”
 
-```
-{{</* spoiler title="What happens at the end" */>}} The lighthouse was a metaphor all along. {{</* /spoiler */>}}
+```markdown
+{{< spoiler title="What happens at the end" >}}
+The lighthouse was a metaphor all along.
+{{< /spoiler >}}
 ```
 
 ### Poem
 
-Centres and italicises the content. Use two trailing spaces at end of each line for line breaks; an empty line between stanzas.
-
-```
-{{</* poem title="i." */>}} last train — / window cracked — / smell of rain {{</* /poem */>}}
-```
-
-In actual use, write each line on its own with two trailing spaces:
+Centers and italicizes content. End each line with two spaces for a Markdown line break, and leave an empty line between stanzas.
 
 ```markdown
-{{</* poem */>}}
+{{< poem title="i." >}}
 last train of the night —  
 someone left a window cracked  
 the smell of rain gets in
-{{</* /poem */>}}
+{{< /poem >}}
 ```
 
-{{< note >}}
-The multi-line form above works fine in post content. The single-line form shown in code is just to avoid documentation rendering issues.
-{{< /note >}}
+### Details / accordion
 
-### Details / Accordion
+A collapsible block for supplemental content such as ingredients, optional steps, or reference material.
 
-A collapsible block for supplemental content — ingredient lists, optional steps, extended notes.
-
-```
-{{</* details title="Ingredients (serves 2)" */>}} - 1½ cups rice / - 6 garlic cloves {{</* /details */>}}
-```
-
-### Star Rating
-
-Positional argument is the score; `max` is optional (defaults to 5).
-
-```
-{{</* rating 8 10 */>}}    →   8/10
-{{</* rating 4 5 */>}}           →         4/5
+```markdown
+{{< details title="Ingredients (serves 2)" >}}
+- 1½ cups rice
+- 6 garlic cloves
+{{< /details >}}
 ```
 
-### Keyboard Keys
+### Star rating
 
-Inline keyboard key styling.
+The first positional argument is the score. The second is the maximum and defaults to 5.
 
+```markdown
+{{< rating 8 10 >}}
+{{< rating 4 5 >}}
 ```
-Press {{</* kbd */>}}Ctrl{{</* /kbd */>}} + {{</* kbd */>}}S{{</* /kbd */>}} to save.
+
+### Keyboard keys
+
+Inline keyboard-key styling.
+
+```markdown
+Press {{< kbd >}}Ctrl{{< /kbd >}} + {{< kbd >}}S{{< /kbd >}} to save.
 ```
 
 ### Center
 
-Wraps content in a centered `<div>`.
-
-```
-{{</* center */>}} This text will be centred. {{</* /center */>}}
-```
-
-### KaTeX (Math)
-
-Use `$...$` for inline math and `$$...$$` for display math directly in Markdown — no shortcode needed.
+Centers Markdown-rendered content.
 
 ```markdown
-The sigmoid $f(x) = \frac{1}{1 + e^{-x}}$ maps any value to (0, 1).
-
-$$
-\sum_{k=1}^{n} k = \frac{n(n+1)}{2}
-$$
+{{< center >}}
+This text is centered.
+{{< /center >}}
 ```
 
-Math is **pre-rendered at build time** — no KaTeX JS loads at runtime. After adding new expressions, run `npm run build:diagrams` and commit `data/katex-cache.json`.
+### Mermaid
 
----
+Use a fenced `mermaid` block or the shortcode. Both require the build-time cache.
+
+```markdown
+{{< mermaid >}}
+graph TD
+  A[Start] --> B{Choice}
+  B -->|Yes| C[End]
+  B -->|No| A
+{{< /mermaid >}}
+```
+
+### KaTeX
+
+Use `$...$` and `$$...$$` directly in Markdown, or use the shortcode. The shortcode is inline by default; add `block` for display math.
+
+```markdown
+Inline: {{< katex >}}\frac{1}{2}{{< /katex >}}
+
+{{< katex block >}}
+\sum_{k=1}^{n} k = \frac{n(n+1)}{2}
+{{< /katex >}}
+```
+
+### Raw HTML
+
+Use `rawhtml` only for trusted HTML that must bypass Hugo escaping.
+
+```markdown
+{{< rawhtml >}}<b>Custom HTML</b>{{< /rawhtml >}}
+```
 
 ## Advanced Features
 
@@ -573,7 +587,7 @@ Math expressions (`$...$` inline, `$$...$$` block) are **pre-rendered to HTML at
 
 **Build workflow:**
 1. Write `$...$` or `$$...$$` in your post
-2. Run `npm run build:diagrams` — updates `data/katex-cache.json`
+2. Run `npm run build:diagrams` inside `themes/spaceboy` — updates `data/katex-cache.json`
 3. Commit the updated cache file
 
 **Detection heuristic:** inline `$...$` is only treated as math if the content contains a LaTeX command (`\frac`, `\sum`, etc.) or `^`/`_`. This avoids false positives from JavaScript `$('selector')` patterns.
@@ -598,14 +612,14 @@ graph TD
 ```
 ````
 
-Diagrams are **pre-rendered to SVGs at build time** via `scripts/render-mermaid-cache.mjs`. No Mermaid JS loads at runtime. SVGs use CSS variables so they adapt to the active color palette automatically.
+Diagrams are **pre-rendered to SVGs at build time** via `scripts/render-mermaid-cache.mjs`. No Mermaid JS loads at runtime. SVGs use CSS variables so they adapt to the active light/dark color scheme.
 
 **Build workflow:**
 1. Add a ` ```mermaid ` block to your post
-2. Run `npm run build:diagrams` — renders SVGs into `static/mermaid-cache/`
+2. Run `npm run build:diagrams` inside `themes/spaceboy` — renders SVGs into `static/mermaid-cache/`
 3. Commit the new SVG and the updated `data/mermaid-manifest.json`
 
-### Raw HTML
+### Raw HTML in Markdown
 
 Use the `rawhtml` shortcode when you deliberately need raw HTML inside Markdown:
 
@@ -615,7 +629,7 @@ Use the `rawhtml` shortcode when you deliberately need raw HTML inside Markdown:
 {{< /rawhtml >}}
 ```
 
-The shortcode bypasses Hugo escaping. Do not use it with untrusted content.
+The shortcode bypasses Hugo escaping. Do not use it with untrusted content. Ordinary raw HTML in Markdown is separate: enable `[markup.goldmark.renderer] unsafe = true` if you need Hugo to keep it.
 
 ---
 
@@ -678,7 +692,7 @@ Excludes a post from `/index.json`, the site's search index. The exact key is `n
 noSearch: true
 ```
 
-Search also requires `JSON` in the home-page outputs, as shown in [Quick start](#quick-start).
+Search also requires `JSON` in the home-page outputs, as shown in [Quick start](#quick-start). `noSearch` affects only the JSON index; the page can still appear on the home page, in recent-post lists, and in related posts.
 
 ---
 
@@ -768,7 +782,7 @@ hideFooter: true
 
 Place each image on its own line. Use descriptive alt text. The built-in lightbox opens body images when clicked.
 
-### Poem
+### Poem page
 
 ```yaml
 viewMode: poem
@@ -833,6 +847,7 @@ The theme orders parts by date and shows a series navigation box when more than 
 | `series` | string | Page only | Group posts into an ordered series |
 | `coverImage` | string | Page only | Banner above the title and social-image fallback |
 | `heroImage` | string | Page only | Taller banner above the title |
+| `album` | string | Page only | Legacy social-image fallback after `coverImage`; does not render a gallery |
 | `epigraph` | string | Page only | Simple opening quotation |
 | `abstract` | string | Page only | Summary block before the body |
 | `author.homepage` | string | Page only | Link on the site author name |
@@ -888,10 +903,12 @@ When `thumbnail` is absent and either thumbnail switch is on, the theme uses the
 | Key | Type | Scope | Effect |
 |---|---|---|---|
 | `customCSS` | string | Page/site | Inline CSS in the page head |
-| `customJS` | string | Page/site | Inline JavaScript before `</body>` |
+| `customJS` | string | Page/site | Inline JavaScript before `</body>` on single pages only |
 | `customHead` | string | Page/site | Raw HTML in the page head |
 | `noindex` | bool | Page/site | Add a robots `noindex` tag |
 | `noSearch` | bool | Page only | Exclude the post from `/index.json` |
+
+Standard Hugo fields such as `summary`, `layout`, `outputs`, `slug`, `url`, `aliases`, `weight`, `publishDate`, `expiryDate`, and `images` also work. Use `images` for Twitter-card artwork, `summary` for a custom excerpt, and `layout` or `outputs` when you add alternate templates.
 
 The current theme does not read `lightbox`, `searchExclude`, `showTitle`, `leftSidebarContent`, or `rightSidebarContent`. Image zoom is built in, and the TOC partials render their own navigation.
 
@@ -1043,9 +1060,9 @@ Comments appear only when the page type is in `mainSections`, `showComments` is 
 - `postFooterContent`: after Markdown content, before related posts.
 - `postAds`: after related posts, before comments.
 - `extraHead`: before `</head>`.
-- `extraBody`: before `</body>`.
+- `extraBody`: before `</body>` on single pages only.
 
-For code that should apply to every page, you can also use `[params] customHead`, `customCSS`, and `customJS`. These use the same rendering paths as the per-page keys.
+`[params] customHead` and `customCSS` use the shared head partial and apply to all page types. `[params] customJS` is emitted only by the single-page template, so it does not run on home, list, taxonomy, or 404 pages.
 
 ### Additional CSS and static prefixes
 
@@ -1055,7 +1072,7 @@ For code that should apply to every page, you can also use `[params] customHead`
   staticPrefix = ""
 ```
 
-`extraCSSFiles` contains paths relative to the site's `assets/` directory. The theme bundles `css/index.css` first and appends each listed file, so an override file can change theme variables and selectors.
+`extraCSSFiles` contains paths relative to the site's `assets/` directory. The theme bundles `css/index.css` first and appends each listed file, so an override file can change theme variables and selectors. Missing files are skipped. This bundle loads before syntax CSS, KaTeX CSS, view-mode styles, and per-page inline overrides; use `customCSS`, `extraHead`, or a head-partial override when a rule must win later in the cascade.
 
 `staticPrefix` is prepended to the RSS URL and `/index.json` search request, and is used for DNS prefetch. It does **not** rewrite bundled CSS, JavaScript, fonts, images, or `fuseJSLocal`. Use a full URL for those assets when hosting them elsewhere.
 
@@ -1122,7 +1139,7 @@ To use a custom font globally, define `@font-face` in your override CSS and set 
 
 ## Customize templates and components
 
-Hugo gives the site's `layouts/` directory priority over the theme's layouts. Copy only the file you need to change, then edit the site copy. This keeps theme updates easier to manage.
+Hugo gives the site's `layouts/` directory priority over the theme's layouts. Copy only the file you need to change, then edit the site copy. This keeps theme updates easier to manage. Spaceboy's page templates are complete documents rather than blocks in a shared `baseof.html`, so a copied page template is the override unit.
 
 ```text
 layouts/
@@ -1163,7 +1180,12 @@ To publish each page's original Markdown as `<page-url>.md`, enable the optional
   page = ["HTML", "markdown"]
 ```
 
-The output uses `.RawContent`: front matter is removed, while shortcodes, math, and Mermaid stay in source form. On Cloudflare Pages, add a `_headers` file to serve `.md` as `text/markdown` rather than as a download.
+The output uses `.RawContent`: front matter is removed, while shortcodes, math, and Mermaid stay in source form. On Cloudflare Pages, add a `_headers` file to serve `.md` as `text/markdown` rather than as a download:
+
+```txt
+/*.md
+  Content-Type: text/markdown; charset=utf-8
+```
 
 ## Build diagrams and math
 
@@ -1186,7 +1208,7 @@ Install the theme's Node dependencies and run its build script:
 
 ```bash
 cd themes/spaceboy
-npm install
+npm ci
 npm run build:diagrams
 cd ../..
 hugo --minify
@@ -1199,7 +1221,7 @@ hugo --minify
 
 Commit the generated cache files when they are part of your source repository. Hosts that run only `hugo` can then serve diagrams and math without Node or Chrome.
 
-Mermaid rendering needs a compatible Node release and Chrome or Chromium. The script can use Puppeteer's browser, a system browser, or `PUPPETEER_EXECUTABLE_PATH`. If you install the theme through Hugo Modules or put it somewhere other than `themes/spaceboy`, adjust the scripts' site-root calculation before using them.
+Node 20 or newer is recommended. The locked Mermaid CLI requires Node `^18.19` or `>=20`, and rendering also needs Chrome or Chromium. The script can use Puppeteer's browser, a system browser, or `PUPPETEER_EXECUTABLE_PATH`. If you install the theme through Hugo Modules or put it somewhere other than `themes/spaceboy`, adjust the scripts' site-root calculation before using them.
 
 ### Goldmark math configuration
 
@@ -1214,7 +1236,7 @@ Math delimiters also need Goldmark passthrough enabled in the **site** config:
     inline = [["$", "$"], ["\\(", "\\)"]]
 ```
 
-The cache scanner recognizes `$...$`, `$$...$$`, `\(...\)`, `\[...\]`, and `{{< katex >}}` shortcodes. Inline `$...$` must contain a LaTeX command or `^`/`_`; use `\(...\)` for a bare expression such as `\( n = 10 \)`.
+The cache scanner recognizes `$...$`, `$$...$$`, `\(...\)`, `\[...\]`, and `{{< katex />}}` shortcodes. Inline `$...$` must contain a LaTeX command or `^`/`_`; use `\(...\)` for a bare expression such as `\( n = 10 \)`.
 
 ## Security and troubleshooting
 
@@ -1227,7 +1249,7 @@ Several options insert trusted HTML, CSS, or JavaScript without Hugo's normal es
 | A post is missing from search | Check `draft`, section membership, and `noSearch` |
 | Title still appears | Use `show-title: false`, not `showTitle: false` |
 | `goofy` still hides metadata after a switch is enabled | Its mode CSS uses `!important`; override the CSS or head partial |
-| Mermaid shows its source code | Run `npm run build:diagrams` and deploy `static/mermaid-cache/` |
+| Mermaid shows its source code | Run `npm run build:diagrams` inside `themes/spaceboy` and deploy `static/mermaid-cache/` |
 | Math shows its source text | Enable Goldmark passthrough, rebuild the KaTeX cache, and check KaTeX CSS |
 | Images do not open | Enable JavaScript; `legacyMode: true` disables the lightbox |
 | Local Fuse.js is ignored | Verify the path and remember that `staticPrefix` does not rewrite it |
